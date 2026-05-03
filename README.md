@@ -207,8 +207,8 @@ docker exec -it node01 bash
 # Shell into Rocky container
 docker exec -it node02 bash
 
-# Tear down and rebuild
-./teardown.sh && ./setup.sh
+# bash script to run the project
+./setup.sh
 ```
 
 ---
