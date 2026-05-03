@@ -1,6 +1,10 @@
 pipeline {
   agent any
 
+  environment {
+    ANSIBLE_HOST_KEY_CHECKING = 'False'
+  }
+
   stages {
 
     stage('Checkout') {
@@ -11,9 +15,9 @@ pipeline {
 
     stage('Syntax Check') {
       steps {
-        sh 'ansible-playbook lab1/iti-webserver/site.yml --syntax-check'
-        sh 'ansible-playbook lab2/lab2/site.yml --syntax-check'
-        sh 'ansible-playbook lab2/mariadb-server/site.yml --syntax-check'
+        sh '/usr/bin/ansible-playbook lab1/iti-webserver/site.yml --syntax-check'
+        sh '/usr/bin/ansible-playbook lab2/lab2/site.yml --syntax-check'
+        sh '/usr/bin/ansible-playbook lab2/mariadb-server/site.yml --syntax-check'
       }
     }
 
