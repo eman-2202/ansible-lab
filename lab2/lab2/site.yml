@@ -1,0 +1,12 @@
+---
+- name: Deploy ITI Web Server
+  hosts: webservers
+  become: true
+  roles:
+    - iti-webserver-role
+
+- name: Deploy Jenkins CI/CD Server
+  hosts: jenkins_agents
+  become: true
+  roles:
+    - jenkins-role

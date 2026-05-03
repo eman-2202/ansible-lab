@@ -1,0 +1,5 @@
+---
+- name: Restart Nginx
+  ansible.builtin.shell: |
+    pgrep nginx > /dev/null && nginx -s reload || nginx
+  changed_when: false

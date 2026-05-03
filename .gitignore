@@ -1,0 +1,4 @@
+vars/vault.yml
+*.retry
+.vault_pass
+*.log

@@ -1,0 +1,72 @@
+---
+- name: Install and configure MariaDB server
+  hosts: dbservers
+  become: true
+  vars_files:
+    - vars/vault.yml
+
+  tasks:
+
+    - name: Install MariaDB server and client
+      ansible.builtin.dnf:
+        name:
+          - mariadb-server
+          - mariadb
+          - python3-PyMySQL
+        state: present
+
+    - name: Initialize MariaDB data directory
+      ansible.builtin.shell: |
+        if [ ! -f /var/lib/mysql/mysql/global_priv.MYD ]; then
+          mysql_install_db --user=mysql --datadir=/var/lib/mysql
+          echo "initialized"
+        else
+          echo "already initialized"
+        fi
+      register: db_init
+      changed_when: "'initialized' in db_init.stdout"
+
+    - name: Start MariaDB
+      ansible.builtin.shell: |
+        pgrep mysqld > /dev/null && echo "already running" || \
+        (mysqld_safe --datadir=/var/lib/mysql &)
+        sleep 5
+      changed_when: false
+
+    - name: Wait for MariaDB to be ready
+      ansible.builtin.wait_for:
+        port: 3306
+        host: 127.0.0.1
+        delay: 2
+        timeout: 30
+
+    - name: Set root password and all host entries in one shot
+      ansible.builtin.shell: |
+        mysql -u root --connect-expired-password -e "
+          ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ db_root_password }}';
+          GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY '{{ db_root_password }}' WITH GRANT OPTION;
+          DELETE FROM mysql.user WHERE User='';
+          DROP DATABASE IF EXISTS test;
+          FLUSH PRIVILEGES;
+        " 2>/dev/null || \
+        mysql -u root -p'{{ db_root_password }}' -e "
+          GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY '{{ db_root_password }}' WITH GRANT OPTION;
+          DELETE FROM mysql.user WHERE User='';
+          DROP DATABASE IF EXISTS test;
+          FLUSH PRIVILEGES;
+        "
+      no_log: true
+      changed_when: false
+
+    - name: Deploy root .my.cnf credentials file
+      ansible.builtin.template:
+        src: templates/my_credentials.cnf.j2
+        dest: /root/.my.cnf
+        owner: root
+        group: root
+        mode: '0600'
+      no_log: true
+
+    - name: Verify MariaDB is accessible
+      ansible.builtin.debug:
+        msg: "MariaDB is up! Connect with: mysql -u root -h 127.0.0.1 -P 3306 -p"

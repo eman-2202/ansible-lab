@@ -1,0 +1,41 @@
+---
+- name: Install and configure ITI Web Server
+  hosts: webservers
+  become: true
+
+  vars:
+    student_name: "Eman Tarek"
+
+  tasks:
+    - name: Install Nginx (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    - name: Install Nginx (RHEL/Rocky)
+      ansible.builtin.dnf:
+        name: nginx
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Deploy custom index.html
+      ansible.builtin.template:
+        src: templates/index.html.j2
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart Nginx
+
+    - name: Ensure Nginx is running
+      ansible.builtin.shell: |
+        nginx -t && (pgrep nginx > /dev/null && nginx -s reload || nginx)
+      changed_when: false
+
+  handlers:
+    - name: Restart Nginx
+      ansible.builtin.shell: |
+        pgrep nginx > /dev/null && nginx -s reload || nginx
+      changed_when: false

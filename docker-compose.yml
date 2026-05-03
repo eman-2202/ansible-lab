@@ -1,0 +1,47 @@
+networks:
+  ansible-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+services:
+  ubuntu-node:
+    build:
+      context: ./dockerfiles
+      dockerfile: Dockerfile.ubuntu
+    container_name: node01
+    hostname: node01.example.com
+    networks:
+      ansible-net:
+        ipv4_address: 172.20.0.10
+    ports:
+      - "2201:22"
+      - "8081:80"
+    extra_hosts:
+      - "node01.example.com:172.20.0.10"
+      - "node02.example.com:172.20.0.20"
+      - "webserver.example.com:172.20.0.10"
+      - "jenkins.example.com:172.20.0.20"
+      - "dbserver1.example.com:172.20.0.20"
+
+  rocky-node:
+    build:
+      context: ./dockerfiles
+      dockerfile: Dockerfile.rocky
+    container_name: node02
+    hostname: node02.example.com
+    networks:
+      ansible-net:
+        ipv4_address: 172.20.0.20
+    ports:
+      - "2202:22"
+      - "8082:80"
+      - "8080:8080"
+      - "3306:3306"
+    extra_hosts:
+      - "node01.example.com:172.20.0.10"
+      - "node02.example.com:172.20.0.20"
+      - "webserver.example.com:172.20.0.10"
+      - "jenkins.example.com:172.20.0.20"
+      - "dbserver1.example.com:172.20.0.20"

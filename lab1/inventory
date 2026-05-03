@@ -1,0 +1,10 @@
+[servers]
+node01.example.com ansible_password=ansible123
+node02.example.com
+
+[webservers]
+node01.example.com ansible_password=ansible123
+
+[all:vars]
+ansible_user=ansible
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'

@@ -1,0 +1,71 @@
+---
+- name: Install Java 21
+  ansible.builtin.dnf:
+    name: java-21-openjdk
+    state: present
+
+- name: Register Java 21 in alternatives
+  ansible.builtin.command: >
+    alternatives --install /usr/bin/java java /usr/lib/jvm/java-21-openjdk/bin/java 2000
+  changed_when: false
+
+- name: Set Java 21 as default
+  ansible.builtin.command: >
+    alternatives --set java /usr/lib/jvm/java-21-openjdk/bin/java
+  changed_when: false
+
+- name: Add Jenkins repository
+  ansible.builtin.yum_repository:
+    name: jenkins
+    description: Jenkins Stable
+    baseurl: https://pkg.jenkins.io/redhat-stable
+    gpgcheck: false
+    enabled: true
+
+- name: Install Jenkins
+  ansible.builtin.dnf:
+    name: jenkins
+    state: present
+    disable_gpg_check: true
+
+- name: Ensure log file exists
+  ansible.builtin.file:
+    path: /var/log/jenkins.log
+    state: touch
+    mode: '0644'
+
+- name: Start Jenkins manually (no systemd)
+  ansible.builtin.shell: |
+    pgrep -f jenkins.war > /dev/null || \
+    nohup java -jar /usr/share/java/jenkins.war --httpPort=8080 \
+    >> /var/log/jenkins.log 2>&1 &
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Wait for Jenkins to start
+  ansible.builtin.wait_for:
+    port: 8080
+    delay: 10
+    timeout: 180
+
+- name: Check if initial password file exists
+  ansible.builtin.stat:
+    path: /root/.jenkins/secrets/initialAdminPassword
+  register: password_file
+
+- name: Get Jenkins initial admin password
+  ansible.builtin.shell: cat /root/.jenkins/secrets/initialAdminPassword
+  register: jenkins_password
+  changed_when: false
+  when: password_file.stat.exists
+
+- name: Print Jenkins initial admin password
+  ansible.builtin.debug:
+    msg: "Jenkins is up! Initial password: {{ jenkins_password.stdout }}"
+  when: password_file.stat.exists
+
+- name: Print Jenkins already configured
+  ansible.builtin.debug:
+    msg: "Jenkins is up and already configured at http://jenkins.example.com:8080"
+  when: not password_file.stat.exists

@@ -1,0 +1,15 @@
+FROM rockylinux:9
+RUN dnf install -y --allowerasing \
+    openssh-server openssh-clients sudo python3 python3-pip \
+    curl wget which procps-ng && dnf clean all
+RUN useradd -m -s /bin/bash ansible && \
+    echo "ansible ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansible && \
+    chmod 440 /etc/sudoers.d/ansible
+RUN ssh-keygen -A && \
+    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config && \
+    mkdir -p /var/run/sshd
+RUN mkdir -p /home/ansible/.ssh && chmod 700 /home/ansible/.ssh && \
+    chown ansible:ansible /home/ansible/.ssh
+EXPOSE 22 80 8080 3306
+CMD ["/usr/sbin/sshd", "-D"]

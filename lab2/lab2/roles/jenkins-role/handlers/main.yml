@@ -1,0 +1,9 @@
+---
+- name: Restart Jenkins
+  ansible.builtin.shell: |
+    pkill -f jenkins.war || true
+    sleep 3
+    nohup runuser -l jenkins -s /bin/bash -c \
+      'java -jar /usr/share/java/jenkins.war --httpPort=8080 \
+      >> /var/log/jenkins/jenkins.log 2>&1' &
+  changed_when: false

@@ -1,0 +1,9 @@
+[webservers]
+webserver.example.com ansible_password=ansible123
+
+[jenkins_agents]
+jenkins.example.com
+
+[all:vars]
+ansible_user=ansible
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'

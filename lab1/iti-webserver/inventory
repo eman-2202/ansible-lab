@@ -1,0 +1,6 @@
+[webservers]
+node01.example.com
+
+[all:vars]
+ansible_user=ansible
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
