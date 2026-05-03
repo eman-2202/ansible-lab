@@ -1,6 +1,6 @@
 # Ansible Automation Labs
 
-**Student:** Eman Tarek  
+**By:** Eman Tarek  
 
 ---
 
